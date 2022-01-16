@@ -1,8 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.BookOperations.CreateBook;
+using WebApi.BookOperations.DeleteBook;
+using WebApi.BookOperations.GetBookDetail;
 using WebApi.BookOperations.GetBooks;
 using WebApi.BookOperations.UpdateBook;
 using WebApi.DbOperations;
@@ -16,16 +21,18 @@ namespace WebApi.AddControllers
     {
 
         private readonly BookStoreDbContext _context;
+        private readonly IMapper _mapper;
 
-        public BookController(BookStoreDbContext context)
+        public BookController(BookStoreDbContext context, IMapper mapper)
         {
             this._context = context;
+            this._mapper = mapper;
         }
 
         [HttpGet]
         public IActionResult GetBooks()
         {
-            GetBooksQuery query = new GetBooksQuery(_context);
+            GetBooksQuery query = new GetBooksQuery(_context,_mapper);
             var result = query.Handle();
             return Ok(result);
         }
@@ -33,8 +40,20 @@ namespace WebApi.AddControllers
         [HttpGet("{id}")]
         public IActionResult GetBookById(int id)
         {
-            GetBooksByIdQuery byIdQuery = new GetBooksByIdQuery(_context);
-            var result = byIdQuery.Handle(id);
+            BooksViewModelById result;
+            try
+            {
+                GetBookDetailQuery byIdQuery = new GetBookDetailQuery(_context,_mapper);
+                byIdQuery.BookId = id;
+                GetBookDetailQueryValidator validator = new GetBookDetailQueryValidator();
+                validator.ValidateAndThrow(byIdQuery);
+                result = byIdQuery.Handle();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
             return Ok(result);
         }
 
@@ -49,10 +68,12 @@ namespace WebApi.AddControllers
         [HttpPost]
         public IActionResult AddBook([FromBody] CreateBookModel newBook)
         {
-            CreateBookCommand command = new CreateBookCommand(_context);
+            CreateBookCommand command = new CreateBookCommand(_context, _mapper);
             try
             {
                 command.Model = newBook;
+                CreateBookCommandValidator validator = new CreateBookCommandValidator();
+                validator.ValidateAndThrow(command);
                 command.Handle();
             }
             catch (Exception ex)
@@ -67,11 +88,15 @@ namespace WebApi.AddControllers
         [HttpPut("{id}")]
         public IActionResult UpdadeBook(int id, [FromBody] UpdateBookModel updatedBook)
         {
-            UpdateBookCommand command = new UpdateBookCommand(_context);
+            
             try
             {
+                UpdateBookCommand command = new UpdateBookCommand(_context);
+                command.BookId = id;
                 command.Model = updatedBook;
-                command.Handle(id);
+                UpdateBookCommandValidator validator = new UpdateBookCommandValidator();
+                validator.ValidateAndThrow(command);
+                command.Handle();
             }
             catch (Exception ex)
             {
@@ -83,13 +108,18 @@ namespace WebApi.AddControllers
         [HttpDelete("{id}")]
         public IActionResult DeleteBook(int id)
         {
-
-            var book = _context.Books.SingleOrDefault(x => x.Id == id);
-
-            if (book is null)
-                return BadRequest();
-            _context.Remove(book);
-            _context.SaveChanges();
+            try
+            {
+                DeleteBookCommand command = new DeleteBookCommand(_context);
+                command.BookId = id;
+                DeleteBookCommandValidator validatior = new DeleteBookCommandValidator();
+                validatior.ValidateAndThrow(command);
+                command.Handle();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
             return Ok();
         }
 
