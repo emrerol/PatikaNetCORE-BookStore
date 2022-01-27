@@ -17,6 +17,24 @@ namespace WebApi.DbOperations
                     return;
                 }
                 
+                context.Authors.AddRange(
+                    new Author{
+                        Name = "Umberto",
+                        Surname = "Eco",
+                        DateOfBirth = new DateTime(1920,10,15)
+                    },
+                    new Author{
+                        Name = "Hannah",
+                        Surname = "Arendt",
+                        DateOfBirth = new DateTime(1895,6,22)
+                    },
+                    new Author{
+                        Name = "John",
+                        Surname = "Steinbeck",
+                        DateOfBirth = new DateTime(1902,2,27)
+                    }
+                );
+
 
                 context.Genres.AddRange(
                     new Genre{
@@ -36,7 +54,7 @@ namespace WebApi.DbOperations
                     new Book
                     {
                         Title = "Gülün Adı",
-                        GenreId = 1, 
+                        GenreId = 1,
                         PageCount = 680,
                         PublishDate = new DateTime(1964, 6, 15)
                     },
