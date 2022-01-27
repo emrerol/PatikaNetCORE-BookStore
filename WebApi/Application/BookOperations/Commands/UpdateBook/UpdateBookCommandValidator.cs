@@ -1,12 +1,14 @@
 using System;
 using FluentValidation;
+using WebApi.BookOperations.Commands.UpdateBook;
 
-namespace WebApi.BookOperations.CreateBook
+namespace WebApi.Application.BookOperations.Commands.UpdateBook
 {
-    public class CreateBookCommandValidator : AbstractValidator<CreateBookCommand>
+    public class UpdateBookCommandValidator:AbstractValidator<UpdateBookCommand>
     {
-        public CreateBookCommandValidator()
+        public UpdateBookCommandValidator()
         {
+            RuleFor(c=>c.BookId).GreaterThan(0);
             RuleFor(command => command.Model.GenreId).GreaterThan(0);
             RuleFor(c=>c.Model.PageCount).GreaterThan(0);
             RuleFor(C=>C.Model.PublishDate.Date).NotEmpty().LessThan(DateTime.Now);
